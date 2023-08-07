@@ -5,6 +5,7 @@ import time
 from tkinter import *
 from tkinter import ttk
 from datetime import datetime
+# from datadownload import DataDownload
 
 IP_LOCAL = "192.168.0.10"
 IP_OFIL  = "192.168.0.100"
@@ -47,6 +48,8 @@ timeCallbackArr = [0,0,0,0]
 callback_flag = 0
 dump_flag = 0
 
+# data = 
+
 def check_respond_data(buffer1, buffer2):
     if len(buffer1) < 1:
         return 0
@@ -61,7 +64,7 @@ def handle_respond_data(buffer):
         array2 = array[0].split('CI_')
         return (array[1],array2[1])
     else:
-        return (buffer,buffer)
+        return (buffer, buffer)
             
 def network_write(fd_socket, poll, msg):
     events = poll.poll(1000) ## eed to fix
