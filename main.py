@@ -44,7 +44,7 @@ List_Command_Querry = ["GA", "MZ", "AE", "DMODE", "MF", "AF", "CNW", "UVC"]
 List_Respond_Data = [0,0,0,0,0,0,0,0]
 List_Suffixes = ["S", "Q", "R"]
 callbackArr = [0,0,0,0] #[zoom, focus, gain, exposure]
-timeCallbackArr = [0,0,0,0]
+timeCallbackArr = [0,0,0,0] #[zoom, focus, gain, exposure]
 callback_flag = 0
 dump_flag = 0
 
@@ -260,7 +260,7 @@ def thread_querry_data():
                     data, command = handle_respond_data(msg_rx_update)
                     if List_Command_Querry[i] == command:
                         List_Respond_Data[i] = int(data)
-                
+                # Update Data for GUI
                 print(List_Respond_Data)
                 GainCurrentValue.set(List_Respond_Data[0])
                 ZoomCurrentValue.set(List_Respond_Data[1])
@@ -276,13 +276,6 @@ def thread_querry_data():
                 now = datetime.now()
                 buffer_set_time ="IC_DATS" + now.strftime("%Y %m %d %H %M %S")
                 network_write(send_socket, send_poller, buffer_set_time)
-                # GainCurrentValue.set(10)
-                # ZoomCurrentValue.set(10)
-                # ExposureCurrentValue.set(20)
-                # Displaycombo.current(2)
-                # FocusCurrentValue.set(10)
-                # Focus.set(1)
-                # UVcolorcombo.current(15)
                 only_update_once = 1
                 dump_flag = 0
             if only_update_once == 1:
@@ -297,31 +290,27 @@ def thread_callback_senddata():
             if connected == 1:
                 for i in range(len(callbackArr)):
                     if callbackArr[i] == 1:
-                        match i:
-                            case 0:
-                                if (time.time() - timeCallbackArr[0]) > 1:
-                                    dt_string = "IC_MZS" + str(int(ZoomCurrentValue.get()))
-                                    print(dt_string)
-                                    network_write(send_socket, send_poller, dt_string)
-                                    callbackArr[0] = 0
-                            case 1:
-                                if (time.time() - timeCallbackArr[1]) > 1:
-                                    dt_string = "IC_MFS" + str(int(FocusCurrentValue.get()))
-                                    print(dt_string)
-                                    network_write(send_socket, send_poller, dt_string)
-                                    callbackArr[1] = 0
-                            case 2:
-                                if (time.time() - timeCallbackArr[2]) > 1:
-                                    dt_string = "IC_GAS" + str(int(GainCurrentValue.get()))
-                                    print(dt_string)
-                                    network_write(send_socket, send_poller, dt_string)
-                                    callbackArr[2] = 0
-                            case 3:
-                                if (time.time() - timeCallbackArr[3]) > 1:
-                                    dt_string = "IC_AES" + str(int(ExposureCurrentValue.get()))
-                                    print(dt_string)
-                                    network_write(send_socket, send_poller, dt_string)
-                                    callbackArr[3] = 0
+                        if i == 0:
+                            if (time.time() - timeCallbackArr[0]) > 1:
+                                dt_string = "IC_MZS" + str(int(ZoomCurrentValue.get()))
+                                print(dt_string)
+                                network_write(send_socket, send_poller, dt_string)
+                        elif i ==  1:
+                            if (time.time() - timeCallbackArr[1]) > 1:
+                                dt_string = "IC_MFS" + str(int(FocusCurrentValue.get()))
+                                print(dt_string)
+                                network_write(send_socket, send_poller, dt_string)
+                        elif i == 2:
+                            if (time.time() - timeCallbackArr[2]) > 1:
+                                dt_string = "IC_GAS" + str(int(GainCurrentValue.get()))
+                                print(dt_string)
+                                network_write(send_socket, send_poller, dt_string)
+                        elif i == 3:
+                            if (time.time() - timeCallbackArr[3]) > 1:
+                                dt_string = "IC_AES" + str(int(ExposureCurrentValue.get()))
+                                print(dt_string)
+                                network_write(send_socket, send_poller, dt_string)
+                        callbackArr[i] = 0
             time.sleep(2)
     _thread_callback_senddata = threading.Thread(target=callback, daemon=True)
     _thread_callback_senddata.start()
