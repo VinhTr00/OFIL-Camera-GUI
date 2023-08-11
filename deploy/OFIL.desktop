@@ -1,0 +1,6 @@
+[Desktop Entry]
+Type=Application
+Name=OFIL CONTROLLER
+Terminal=false
+Exec=/usr/bin/python3 /home/$USER/Documents/Python-Project/Ofil_Camera/main.py
+Icon=/home/$USER/Documents/Python-Project/Ofil_Camera/deploy/OFIL.png

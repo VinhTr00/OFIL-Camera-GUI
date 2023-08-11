@@ -7,7 +7,7 @@ from tkinter import ttk
 from datetime import datetime
 # from datadownload import DataDownload
 
-IP_LOCAL = "192.168.0.10"
+IP_LOCAL = "0.0.0.0"
 IP_OFIL  = "192.168.0.100"
 
 SEND_PORT = 4526    
@@ -67,7 +67,7 @@ def handle_respond_data(buffer):
         return (buffer, buffer)
             
 def network_write(fd_socket, poll, msg):
-    events = poll.poll(1000) ## eed to fix
+    events = poll.poll(1000) ## need to fix
     for fd, event in events:
         if fd == fd_socket.fileno() and event == select.POLLOUT:
             try:
@@ -291,22 +291,22 @@ def thread_callback_senddata():
                 for i in range(len(callbackArr)):
                     if callbackArr[i] == 1:
                         if i == 0:
-                            if (time.time() - timeCallbackArr[0]) > 1:
+                            if (time.time() - timeCallbackArr[0]) > 0.5:
                                 dt_string = "IC_MZS" + str(int(ZoomCurrentValue.get()))
                                 print(dt_string)
                                 network_write(send_socket, send_poller, dt_string)
                         elif i ==  1:
-                            if (time.time() - timeCallbackArr[1]) > 1:
+                            if (time.time() - timeCallbackArr[1]) > 0.5:
                                 dt_string = "IC_MFS" + str(int(FocusCurrentValue.get()))
                                 print(dt_string)
                                 network_write(send_socket, send_poller, dt_string)
                         elif i == 2:
-                            if (time.time() - timeCallbackArr[2]) > 1:
+                            if (time.time() - timeCallbackArr[2]) > 0.5:
                                 dt_string = "IC_GAS" + str(int(GainCurrentValue.get()))
                                 print(dt_string)
                                 network_write(send_socket, send_poller, dt_string)
                         elif i == 3:
-                            if (time.time() - timeCallbackArr[3]) > 1:
+                            if (time.time() - timeCallbackArr[3]) > 0.5:
                                 dt_string = "IC_AES" + str(int(ExposureCurrentValue.get()))
                                 print(dt_string)
                                 network_write(send_socket, send_poller, dt_string)
