@@ -46,9 +46,7 @@ List_Suffixes = ["S", "Q", "R"]
 callbackArr = [0,0,0,0] #[zoom, focus, gain, exposure]
 timeCallbackArr = [0,0,0,0] #[zoom, focus, gain, exposure]
 callback_flag = 0
-dump_flag = 0
 
-# data = 
 
 def check_respond_data(buffer1, buffer2):
     if len(buffer1) < 1:
@@ -122,7 +120,7 @@ def callback_ZoomSlider(event):
     global connected
     if connected == 1:
         callbackArr[0] = 1
-        timeCallbackArr[0] = time.time()
+        # timeCallbackArr[0] = time.time()
         # dt_string = "IC_MZS" + str(int(ZoomCurrentValue.get()))
         # print(dt_string)
         # network_write(send_socket, send_poller, dt_string)
@@ -130,7 +128,7 @@ def callback_ZoomSlider(event):
 def callback_FocusSlider(event):
     global connected
     if connected == 1:
-        timeCallbackArr[1] = time.time()
+        # timeCallbackArr[1] = time.time()
         callbackArr[1] = 1
         # dt_string = "IC_MFS" + str(int(FocusCurrentValue.get()))
         # print(dt_string)
@@ -139,7 +137,7 @@ def callback_FocusSlider(event):
 def callback_GainSlider(event):
     global connected
     if connected == 1:
-        timeCallbackArr[2] = time.time()
+        # timeCallbackArr[2] = time.time()
         callbackArr[2] = 1
         # dt_string = "IC_GAS" + str(GainCurrentValue.get())
         # print(dt_string)
@@ -148,7 +146,7 @@ def callback_GainSlider(event):
 def callback_Exposure(event):
     global connected
     if connected == 1:
-        timeCallbackArr[3] = time.time()
+        # timeCallbackArr[3] = time.time()
         callbackArr[3] = 1
         # dt_string = "IC_AES" + str(int(ExposureCurrentValue.get()))
         # print(dt_string)
@@ -200,7 +198,7 @@ def thread_check_connection():
         global last_heartbeat_hera_recv, connected
         while True:
             try:
-                if (time.time() - last_heartbeat_hera_recv) > 5:
+                if (time.time() - last_heartbeat_hera_recv) > 30:
                     connected = 0
                 if connected == 0:
                     State.config(text="Disconnected", bg="red")
@@ -209,7 +207,7 @@ def thread_check_connection():
                     # network_write(send_socket, send_poller, "IC_QMMFQ")   
             except:
                 pass
-            time.sleep(0.5)
+            time.sleep(1)
     _thread_check_connection = threading.Thread(target=check_connection, daemon=True)
     _thread_check_connection.start()
     
@@ -221,18 +219,16 @@ def thread_heartbeat():
         global last_heartbeat_hera_recv, connected, msg_rx
         while True:
             # print(connected)
-            if dump_flag == 0:
-                if connected == 0:
-                    network_write(send_socket, send_poller, "IC_ALVS")
-                msg_rx = network_read(recv_socket, recv_poller).decode('utf-8').strip()
-                print(msg_rx)
-                if msg_rx == "CI_ALVQ" or check_respond_data(msg_rx, "CI_") == 1:
-                    connected = 1
-                    network_write(send_socket, send_poller, "IC_ALVR")
-                    last_heartbeat_hera_recv = time.time()
-                    # print(last_heartbeat_hera_recv)
-                
-            time.sleep(1)
+            if connected == 0:
+                network_write(send_socket, send_poller, "IC_ALVS")
+            msg_rx = network_read(recv_socket, recv_poller).decode('utf-8').strip()
+            print(msg_rx)
+            if msg_rx == "CI_ALVQ" or check_respond_data(msg_rx, "CI_") == 1:
+                connected = 1
+                network_write(send_socket, send_poller, "IC_ALVR")
+                last_heartbeat_hera_recv = time.time()
+                print("IC_ALVR")
+            time.sleep(0.5)
     _thread_heartbeat = threading.Thread(target=init_communication, daemon=True)
     _thread_heartbeat.start()
     
@@ -241,12 +237,18 @@ def thread_querry_data():
     Querry data from OFIL to update GUI
     """
     def update_data():
-        global msg_tx_update, msg_rx_update, byte, dump_flag
+        global msg_tx_update, msg_rx_update, byte, msg_rx, connected
         only_update_once = 0
         while True:
             time.sleep(2)
-            if connected == 1:
-                dump_flag = 1
+            if connected == 0:
+                network_write(send_socket, send_poller, "IC_ALVS")
+                msg_rx = network_read(recv_socket, recv_poller).decode('utf-8').strip()
+                print(msg_rx)
+                if msg_rx == "CI_ALVQ" or check_respond_data(msg_rx, "CI_") == 1:
+                    connected = 1
+                    network_write(send_socket, send_poller, "IC_ALVR")
+            elif connected == 1:
                 for i in range(len(List_Command_Querry)):
                     msg_tx_update = "IC_" + List_Command_Querry[i] + "Q"
                     msg_rx_fuck = "CI_" + List_Command_Querry[i] + "R"
@@ -277,9 +279,9 @@ def thread_querry_data():
                 buffer_set_time ="IC_DATS" + now.strftime("%Y %m %d %H %M %S")
                 network_write(send_socket, send_poller, buffer_set_time)
                 only_update_once = 1
-                dump_flag = 0
             if only_update_once == 1:
                 print("thread_querry_data exit")
+                thread_heartbeat()
                 return
     _thread_querry_data = threading.Thread(target=update_data, daemon=True)
     _thread_querry_data.start()
@@ -291,25 +293,25 @@ def thread_callback_senddata():
                 for i in range(len(callbackArr)):
                     if callbackArr[i] == 1:
                         if i == 0:
-                            if (time.time() - timeCallbackArr[0]) > 0.5:
-                                dt_string = "IC_MZS" + str(int(ZoomCurrentValue.get()))
-                                print(dt_string)
-                                network_write(send_socket, send_poller, dt_string)
+                            # if (time.time() - timeCallbackArr[0]) > 0.1:
+                            dt_string = "IC_MZS" + str(int(ZoomCurrentValue.get()))
+                            print(dt_string)
+                            network_write(send_socket, send_poller, dt_string)
                         elif i ==  1:
-                            if (time.time() - timeCallbackArr[1]) > 0.5:
-                                dt_string = "IC_MFS" + str(int(FocusCurrentValue.get()))
-                                print(dt_string)
-                                network_write(send_socket, send_poller, dt_string)
+                            # if (time.time() - timeCallbackArr[1]) > 0.1:
+                            dt_string = "IC_MFS" + str(int(FocusCurrentValue.get()))
+                            print(dt_string)
+                            network_write(send_socket, send_poller, dt_string)
                         elif i == 2:
-                            if (time.time() - timeCallbackArr[2]) > 0.5:
-                                dt_string = "IC_GAS" + str(int(GainCurrentValue.get()))
-                                print(dt_string)
-                                network_write(send_socket, send_poller, dt_string)
+                            # if (time.time() - timeCallbackArr[2]) > 0.1:
+                            dt_string = "IC_GAS" + str(int(GainCurrentValue.get()))
+                            print(dt_string)
+                            network_write(send_socket, send_poller, dt_string)
                         elif i == 3:
-                            if (time.time() - timeCallbackArr[3]) > 0.5:
-                                dt_string = "IC_AES" + str(int(ExposureCurrentValue.get()))
-                                print(dt_string)
-                                network_write(send_socket, send_poller, dt_string)
+                            # if (time.time() - timeCallbackArr[3]) > 0.1:
+                            dt_string = "IC_AES" + str(int(ExposureCurrentValue.get()))
+                            print(dt_string)
+                            network_write(send_socket, send_poller, dt_string)
                         callbackArr[i] = 0
             time.sleep(2)
     _thread_callback_senddata = threading.Thread(target=callback, daemon=True)
@@ -317,7 +319,7 @@ def thread_callback_senddata():
                                     
 # Start thread                     
 thread_check_connection()
-thread_heartbeat()
+# thread_heartbeat()
 thread_querry_data()
 thread_callback_senddata()
 
@@ -334,7 +336,7 @@ CaptureBT.grid(row=3, column=1, pady=20)
 ZoomLabel = LabelFrame(mainTab,text="Zoom Camera")
 ZoomLabel.grid(row=4, column=0, columnspan=2)
 ZoomCurrentValue = DoubleVar()
-ZoomSlider = Scale(ZoomLabel, from_= 0, to= 40,length= 350, orient='horizontal', variable=ZoomCurrentValue, command=callback_ZoomSlider)
+ZoomSlider = Scale(ZoomLabel, from_= 0, to= 14,length= 350, orient='horizontal', variable=ZoomCurrentValue, command=callback_ZoomSlider)
 ZoomSlider.grid(row=0, column=0,columnspan=2,pady=10)
 
 # Focus Manual or Auto
