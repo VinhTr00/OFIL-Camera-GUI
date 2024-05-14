@@ -175,7 +175,7 @@ def callback_Focus():
 # GUI
 root = Tk()
 root.title("OFIL CONTROLLER")
-root.geometry("380x510")
+root.geometry("380x530")
 root.resizable(False, False)
 # style = Style(root)
 # style.configure(".",font=("Arial",20))  # change size of text tab
