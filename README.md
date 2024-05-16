@@ -16,6 +16,6 @@ $ python3 main.py
 ## How to deploy to desktop
 - After run testing successfully, copy OFIL.desktop from /deploy to Desktop folder of your machine.
 - Right click on OFIL.desktop and choose Allow Launching.
-- Right click on OFIL.desktop and choose Properties
+- Right click on OFIL.desktop and choose Properties \
 ![](/img/properties.png)
 - Click and run the application
